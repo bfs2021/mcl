@@ -8,6 +8,7 @@ import { fetchJson, fetchWithTimeout, lastHealthCheck, mapToMirror, OFFICIAL } f
 import { assetsDir, assetsIndexDir, assetsObjectsDir, cacheDir, librariesDir, versionsDir } from './paths';
 import { VersionManifestEntry, DownloadSource } from '../shared/types';
 import { readJson, writeJson } from './store';
+import { describeError } from './errors';
 
 export interface LibraryDownload {
   name: string;            // maven 坐标
@@ -83,7 +84,7 @@ export async function getVersionManifest(source: DownloadSource, customMirror?: 
     return cache.manifest;
   }
   // 前缀由渲染层统一添加，这里只描述连接失败原因，避免「版本清单加载失败」重复两次
-  throw new Error(`无法连接下载源：${lastError instanceof Error ? lastError.message : String(lastError)}。请检查网络或在设置中切换下载源后重试。`);
+  throw new Error(`无法连接下载源：${describeError(lastError)}。请检查网络或在设置中切换下载源后重试。`);
 }
 
 /** auto 模式实际生效源：读最近测速缓存（无测速或过期则默认 BMCLAPI，mirror:test 可刷新） */
@@ -442,7 +443,7 @@ export async function fetchAssetIndex(resolved: Record<string, any>, source: Dow
     }
   }
   if (!indexJson) {
-    throw new Error(`资源索引下载失败（镜像与官方源均失败）：${lastError instanceof Error ? lastError.message : lastError}`);
+    throw new Error(`资源索引下载失败（镜像与官方源均失败）：${describeError(lastError)}`);
   }
   try {
     fs.mkdirSync(assetsIndexDir(), { recursive: true });
